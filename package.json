@@ -1,5 +1,5 @@
 {
-  "name": "dsh-peer-sync",
+  "name": "dsh-subagent-comms",
   "version": "1.0.0",
   "description": "In-memory Pub/Sub and workspace blackboard that lets sibling DeepSeek Harness subagents share artifacts, contracts and signals.",
   "type": "module",
@@ -20,6 +20,7 @@
     "deepseek-harness",
     "dsh",
     "dsh-plugin",
+    "dsh-subagent-comms",
     "subagents",
     "pubsub",
     "blackboard"

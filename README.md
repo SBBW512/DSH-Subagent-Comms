@@ -1,4 +1,4 @@
-# dsh-peer-sync
+# dsh-subagent-comms
 
 In-memory Pub/Sub and blackboard synchronization plugin for DeepSeek Harness (DSH) subagents.
 
@@ -6,9 +6,9 @@ In-memory Pub/Sub and blackboard synchronization plugin for DeepSeek Harness (DS
 
 ## Installation
 
-> **Important**: A DSH restart is required for newly installed plugins and tools to appear. After restarting DSH, the four tools `peer_publish`, `peer_read`, `peer_await`, and `peer_broadcast` appear in an agent's registered tool list.
+> **Important**: A DSH restart is required for newly installed plugins and tools to appear. After restarting DSH, the four tools `peer_publish`, `peer_read`, `peer_await`, and `peer_broadcast` appear in an agent's registered tool list. Package `dsh-subagent-comms` registers the Cordis plugin named `peer-sync` and the four tool names are unchanged.
 
-You can install `dsh-peer-sync` using any of the following three routes:
+You can install `dsh-subagent-comms` using any of the following three routes:
 
 ### Route 1: From a Git Clone (Development / Local Linking)
 
@@ -23,25 +23,25 @@ You can install `dsh-peer-sync` using any of the following three routes:
 3. Create a junction or symlink in the profile's `node_modules`:
    - **Windows PowerShell / CMD**:
      ```cmd
-     mklink /J node_modules\dsh-peer-sync C:\path\to\DSH-Subagent-Comms
+     mklink /J node_modules\dsh-subagent-comms C:\path\to\DSH-Subagent-Comms
      ```
    - **Linux / macOS**:
      ```bash
-     ln -s /path/to/DSH-Subagent-Comms node_modules/dsh-peer-sync
+     ln -s /path/to/DSH-Subagent-Comms node_modules/dsh-subagent-comms
      ```
 4. In the profile's `package.json`, add the package to `dependencies`:
    ```json
    "dependencies": {
-     "dsh-peer-sync": "link:../../plugins/dsh-peer-sync"
+     "dsh-subagent-comms": "link:../../plugins/dsh-subagent-comms"
    }
    ```
    *(adjust the relative path to your clone location)*
-5. In the same profile's `package.json`, add `"dsh-peer-sync"` to `dsh.profile.bundles`:
+5. In the same profile's `package.json`, add `"dsh-subagent-comms"` to `dsh.profile.bundles`:
    ```json
    "dsh": {
      "profile": {
        "bundles": [
-         "dsh-peer-sync"
+         "dsh-subagent-comms"
        ]
      }
    }
@@ -57,14 +57,14 @@ You can install `dsh-peer-sync` using any of the following three routes:
    ```
 2. Install the package via npm:
    ```bash
-   npm install dsh-peer-sync
+   npm install dsh-subagent-comms
    ```
-3. Add `"dsh-peer-sync"` to `dsh.profile.bundles` in the profile's `package.json`:
+3. Add `"dsh-subagent-comms"` to `dsh.profile.bundles` in the profile's `package.json`:
    ```json
    "dsh": {
      "profile": {
        "bundles": [
-         "dsh-peer-sync"
+         "dsh-subagent-comms"
        ]
      }
    }
@@ -73,20 +73,20 @@ You can install `dsh-peer-sync` using any of the following three routes:
 
 ### Route 3: Manual Installation
 
-1. Copy the `dsh-peer-sync` folder directly into your profile's `node_modules` directory:
-   `profiles\<name>\node_modules\dsh-peer-sync`
-2. In the profile's `package.json`, add `"dsh-peer-sync"` to `dependencies`:
+1. Copy the `dsh-subagent-comms` folder directly into your profile's `node_modules` directory:
+   `profiles\<name>\node_modules\dsh-subagent-comms`
+2. In the profile's `package.json`, add `"dsh-subagent-comms"` to `dependencies`:
    ```json
    "dependencies": {
-     "dsh-peer-sync": "*"
+     "dsh-subagent-comms": "*"
    }
    ```
-3. In the profile's `package.json`, add `"dsh-peer-sync"` to `dsh.profile.bundles`:
+3. In the profile's `package.json`, add `"dsh-subagent-comms"` to `dsh.profile.bundles`:
    ```json
    "dsh": {
      "profile": {
        "bundles": [
-         "dsh-peer-sync"
+         "dsh-subagent-comms"
        ]
      }
    }
@@ -179,11 +179,11 @@ Workers announce lightweight progress or status updates into the rolling broadca
 
 DSH subagents run as isolated Cordis sessions. Sibling workers cannot share intermediate artifacts or signal each other, so concurrent slices duplicate work and drift on shared interfaces.
 
-`dsh-peer-sync` closes that gap with an in-memory Pub/Sub and blackboard that every agent in the active workspace shares. It enables concurrent agents to coordinate handoffs, wait for dependencies without busy-polling or token spend, read shared intermediate state, and broadcast progress notices.
+`dsh-subagent-comms` closes that gap with an in-memory Pub/Sub and blackboard that every agent in the active workspace shares. It enables concurrent agents to coordinate handoffs, wait for dependencies without busy-polling or token spend, read shared intermediate state, and broadcast progress notices.
 
 ## Plugin Identity and Wiring
 
-- **Package**: `dsh-peer-sync` v1.0.0
+- **Package**: `dsh-subagent-comms` v1.0.0
 - **Module type**: ESM (`"type": "module"`)
 - **Main entry**: `./index.js`
 - **Dependencies**: Zero runtime dependencies (uses only standard library `node:events`)
@@ -193,7 +193,7 @@ DSH subagents run as isolated Cordis sessions. Sibling workers cannot share inte
   - `inject = ['tools']`
   - `apply(ctx)`
   - `diagnostics(workspaceId = 'default')`
-- **Cordis wiring**: Loaded as a DSH bundle. `cordis.patch.yml` inserts one Cordis entry with `id: peer-sync`, `name: 'dsh-peer-sync'`. The module specifier is `dsh-peer-sync` and bundle name is `dsh-peer-sync`.
+- **Cordis wiring**: Loaded as a DSH bundle. `cordis.patch.yml` inserts one Cordis entry with `id: dsh-subagent-comms`, `name: 'dsh-subagent-comms'`. The module specifier is `dsh-subagent-comms` and bundle name is `dsh-subagent-comms`.
 - **Initialization safety**: A failure to initialise is logged with a `[peer-sync]` prefix instead of crashing the host.
 
 ## Workspace Scoping

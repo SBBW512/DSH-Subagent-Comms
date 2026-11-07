@@ -1,4 +1,4 @@
-# dsh-peer-sync — in-memory Pub/Sub + workspace blackboard for sibling subagents.
+# dsh-subagent-comms — in-memory Pub/Sub + workspace blackboard for sibling subagents.
 - insert:
-    - id: peer-sync
-      name: 'dsh-peer-sync'
+    - id: dsh-subagent-comms
+      name: 'dsh-subagent-comms'
