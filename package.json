@@ -1,0 +1,46 @@
+{
+  "name": "dsh-peer-sync",
+  "version": "1.0.0",
+  "description": "In-memory Pub/Sub and workspace blackboard that lets sibling DeepSeek Harness subagents share artifacts, contracts and signals.",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "subagents",
+    "pubsub",
+    "blackboard"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  },
+  "author": "SBBW512",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SBBW512/DSH-Subagent-Comms.git"
+  },
+  "homepage": "https://github.com/SBBW512/DSH-Subagent-Comms#readme",
+  "bugs": {
+    "url": "https://github.com/SBBW512/DSH-Subagent-Comms/issues"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ]
+}
