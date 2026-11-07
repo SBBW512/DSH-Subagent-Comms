@@ -14,6 +14,7 @@ const MAX_WORKSPACES = 64
 const MAX_CATALOG_KEYS = 200
 
 const workspaces = new Map() // workspaceId -> { kv: Map, emitter: EventEmitter, broadcasts: Map, waiters: Set }
+const evictions = { keys: 0, topics: 0, workspaces: 0 }
 let sweepTimer = null
 let liveApplies = 0
 
@@ -56,12 +57,13 @@ function storeFor(workspaceId) {
     if (evictedWs?.waiters) {
       for (const cancel of evictedWs.waiters) {
         try {
-          cancel()
+          cancel('evicted')
         } catch {}
       }
       evictedWs.waiters.clear()
     }
     workspaces.delete(lruWsId)
+    evictions.workspaces += 1
   }
 
   ws = {
@@ -89,7 +91,7 @@ function getLiveEntry(ws, kvKey, now = Date.now()) {
  * Return in-memory diagnostics for the given workspace.
  *
  * @param {string} [workspaceId='default'] - Workspace identifier.
- * @returns {{ workspaceId: string, keys: number, listeners: number, broadcasts: Record<string, number> }}
+ * @returns {{ workspaceId: string, keys: number, listeners: number, broadcasts: Record<string, number>, evicted: { keys: number, topics: number, workspaces: number } }}
  */
 export function diagnostics(workspaceId = 'default') {
   const id =
@@ -103,6 +105,11 @@ export function diagnostics(workspaceId = 'default') {
       keys: 0,
       listeners: 0,
       broadcasts: Object.create(null),
+      evicted: {
+        keys: evictions.keys,
+        topics: evictions.topics,
+        workspaces: evictions.workspaces,
+      },
     }
   }
 
@@ -128,6 +135,11 @@ export function diagnostics(workspaceId = 'default') {
     keys: liveKeys,
     listeners: totalListeners,
     broadcasts: broadcastCounts,
+    evicted: {
+      keys: evictions.keys,
+      topics: evictions.topics,
+      workspaces: evictions.workspaces,
+    },
   }
 }
 
@@ -144,7 +156,7 @@ export function apply(ctx) {
 
       for (const cancel of localWaiters) {
         try {
-          cancel()
+          cancel('disposed')
         } catch {}
       }
       localWaiters.clear()
@@ -160,7 +172,7 @@ export function apply(ctx) {
         if (ws.waiters) {
           for (const cancel of ws.waiters) {
             try {
-              cancel()
+              cancel('disposed')
             } catch {}
           }
           ws.waiters.clear()
@@ -290,6 +302,7 @@ export function apply(ctx) {
         while (ws.kv.size > MAX_KEYS_PER_WORKSPACE) {
           const oldestKey = ws.kv.keys().next().value
           ws.kv.delete(oldestKey)
+          evictions.keys += 1
         }
 
         ws.emitter.emit(kvKey, { payload: value, publishedAt })
@@ -522,14 +535,14 @@ export function apply(ctx) {
             signal.addEventListener('abort', onAbort)
           }
 
-          onDispose = () => {
+          onDispose = (reason = 'disposed') => {
             cleanup()
             resolve({
               status: 'cancelled',
               topic: args.topic,
               key: args.key,
               waited_ms: Math.max(0, Date.now() - started),
-              reason: 'disposed',
+              reason,
             })
           }
           ws.waiters.add(onDispose)
@@ -609,6 +622,7 @@ export function apply(ctx) {
         while (ws.broadcasts.size > MAX_TOPICS_PER_WORKSPACE) {
           const lruTopic = ws.broadcasts.keys().next().value
           ws.broadcasts.delete(lruTopic)
+          evictions.topics += 1
         }
 
         const timestamp = new Date().toISOString()

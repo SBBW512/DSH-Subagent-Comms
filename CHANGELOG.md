@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-11-07
+### Fixed
+- A waiter whose workspace was dropped by the workspace cap now reports `reason: "evicted"` instead of the misleading `"disposed"`.
+### Added
+- `diagnostics()` now returns process-wide cumulative `evicted` counters for keys, broadcast topics and workspaces, making silent cap eviction observable.
+
 ## [1.0.0] — package renamed
 
 The package was renamed from `dsh-peer-sync` to `dsh-subagent-comms` to match the repository name before the first npm release, and no tool name, export or behaviour changed.

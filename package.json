@@ -1,6 +1,6 @@
 {
   "name": "dsh-subagent-comms",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "In-memory Pub/Sub and workspace blackboard that lets sibling DeepSeek Harness subagents share artifacts, contracts and signals.",
   "type": "module",
   "main": "./index.js",

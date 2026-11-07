@@ -535,8 +535,77 @@ await runCase('payload and payload_json together are rejected', async () => {
   )
 })
 
+// 23. evicted workspace cancels its waiters with reason evicted
+await runCase('evicted workspace cancels its waiters with reason evicted', async () => {
+  const exec0 = { agent: { workspaceId: 'evict-0' } }
+  const awaitPromise = call(
+    tools,
+    'peer_await',
+    {
+      topic: 'evict-topic',
+      key: 'evict-key',
+      timeout_ms: 60000,
+    },
+    exec0,
+  )
+
+  // Force eviction by touching MAX_WORKSPACES (64) further workspaces
+  for (let i = 1; i <= 64; i++) {
+    await call(
+      tools,
+      'peer_publish',
+      {
+        topic: 'dummy-topic',
+        key: 'dummy-key',
+        payload: i,
+      },
+      { agent: { workspaceId: `evict-${i}` } },
+    )
+  }
+
+  const res = await awaitPromise
+  assert.equal(res.status, 'cancelled')
+  assert.equal(res.reason, 'evicted')
+  assert.equal(res.topic, 'evict-topic')
+  assert.equal(res.key, 'evict-key')
+})
+
+// 24. diagnostics reports cumulative eviction counters
+await runCase('diagnostics reports cumulative eviction counters', async () => {
+  const diagInit = diagnostics()
+  assert.ok(diagInit.evicted, 'expected evicted in diagnostics')
+  assert.equal(typeof diagInit.evicted.keys, 'number')
+  assert.equal(typeof diagInit.evicted.topics, 'number')
+  assert.equal(typeof diagInit.evicted.workspaces, 'number')
+
+  const before = diagInit.evicted.keys
+  const ws = 'ws-diag-evict'
+  const exec = { agent: { workspaceId: ws } }
+  const maxKeys = 2000
+  const count = maxKeys + 5
+
+  for (let i = 1; i <= count; i++) {
+    await call(
+      tools,
+      'peer_publish',
+      {
+        topic: 'diag-topic',
+        key: `k-${i}`,
+        payload: `val-${i}`,
+      },
+      exec,
+    )
+  }
+
+  const diagAfter = diagnostics(ws)
+  assert.ok(
+    diagAfter.evicted.keys >= before + 5,
+    `expected evicted.keys >= ${before + 5}, got ${diagAfter.evicted.keys}`,
+  )
+})
+
 disposeAll()
 
 if (!failed && process.exitCode !== 1) {
-  console.log('SMOKE OK (22 cases)')
+  console.log('SMOKE OK (24 cases)')
 }

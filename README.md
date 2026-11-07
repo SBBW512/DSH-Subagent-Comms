@@ -183,7 +183,7 @@ DSH subagents run as isolated Cordis sessions. Sibling workers cannot share inte
 
 ## Plugin Identity and Wiring
 
-- **Package**: `dsh-subagent-comms` v1.0.0
+- **Package**: `dsh-subagent-comms` v1.0.1
 - **Module type**: ESM (`"type": "module"`)
 - **Main entry**: `./index.js`
 - **Dependencies**: Zero runtime dependencies (uses only standard library `node:events`)
@@ -417,6 +417,7 @@ The three outcomes and their fields:
 - `cancelled`: Waiting was interrupted before resolution or timeout. The `reason` field indicates the cause:
   - `"aborted"`: The caller's tool call was cancelled (e.g. abort signal).
   - `"disposed"`: The plugin was unloaded or disposed.
+  - `"evicted"`: The workspace was dropped by the workspace cap.
 
 ---
 
@@ -472,6 +473,11 @@ diagnostics(workspaceId = 'default')
     "broadcasts": {
       "general": 12,
       "build": 3
+    },
+    "evicted": {
+      "keys": 0,
+      "topics": 0,
+      "workspaces": 0
     }
   }
   ```
@@ -479,6 +485,7 @@ diagnostics(workspaceId = 'default')
   - `keys`: Live entry count in the workspace key/value store.
   - `listeners`: Total attached `EventEmitter` listener count across keys in the workspace.
   - `broadcasts`: Topic-to-message-count mapping showing retained message counts per topic.
+  - `evicted`: Process-wide cumulative counters `{ keys, topics, workspaces }` tracking entries discarded when caps are exceeded. Hitting a cap discards the oldest data silently, but is now observable through these cumulative counters.
 
 The smoke test uses `diagnostics()` to prove no listeners leak after resolution or timeout.
 
@@ -504,7 +511,7 @@ node test/smoke.mjs
 
 ### Test Cases
 
-The test suite exercises 22 cases:
+The test suite exercises 24 cases:
 1. `publish+read round-trip preserves payload exactly`: Verifies publishing a key, reading it back, and overwriting the payload with last-write-wins TTL reset.
 2. `await resolves immediately when key already published`: Verifies that `peer_await` immediately returns when the requested key already exists in the store.
 3. `await resolves asynchronously when peer publishes 200ms later`: Verifies asynchronous peer signaling where a listener is woken 200 ms later by a peer publication.
@@ -527,10 +534,12 @@ The test suite exercises 22 cases:
 20. `payload_json stores a parsed object`: Verifies that publishing via `payload_json` parses the JSON string and stores a real structured object.
 21. `payload_json rejects invalid json`: Verifies that malformed JSON in `payload_json` is rejected with an error matching `not valid JSON`.
 22. `payload and payload_json together are rejected`: Verifies that supplying both `payload` and `payload_json` is rejected with an error matching `not both`.
+23. `evicted workspace cancels its waiters with reason evicted`: Verifies that an evicted workspace cancels its pending waiters with status `cancelled` and reason `evicted`.
+24. `diagnostics reports cumulative eviction counters`: Verifies that `diagnostics()` reports cumulative process-wide eviction counters for keys, topics, and workspaces.
 
 ### Output
 
-The test runner prints one PASS line per case and finishes with `SMOKE OK (22 cases)`:
+The test runner prints one PASS line per case and finishes with `SMOKE OK (24 cases)`:
 
 ```text
 PASS publish+read round-trip preserves payload exactly
@@ -555,5 +564,7 @@ PASS json-looking string payload stays a string
 PASS payload_json stores a parsed object
 PASS payload_json rejects invalid json
 PASS payload and payload_json together are rejected
-SMOKE OK (22 cases)
+PASS evicted workspace cancels its waiters with reason evicted
+PASS diagnostics reports cumulative eviction counters
+SMOKE OK (24 cases)
 ```
